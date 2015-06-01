@@ -1,5 +1,7 @@
 #! /usr/bin/python
-# Written by Dan Mandle http://dan.mandle.me September 2012
+# GPA tracking system for RaspBerry Pi
+# By Chris Armour 
+# Some sections created by Dan Mandle http://dan.mandle.me September 2012
 # License: GPL 2.0
  
 import os
@@ -20,6 +22,7 @@ gpsd = None #seting the global variable
 cummDist = 0
 old_lati = 0
 old_longi = 0
+current_distance = 0
  
 os.system('clear') #clear the terminal (optional)
  
@@ -63,7 +66,8 @@ if __name__ == '__main__':
     while True:
       global cummDist
       global old_lati
-      global old_longi 
+      global old_longi
+      global current_distance
       #It may take a second or two to get good data
       #print gpsd.fix.latitude,', ',gpsd.fix.longitude,'  Time: ',gpsd.utc
 
@@ -94,9 +98,12 @@ if __name__ == '__main__':
       sped = str(gpsd.fix.speed)
       print "Old Latitude:  ", old_lati
       print "Old Longitude:  ", old_longi
-      cummDistNum = round(getDistance(old_lati,old_longi,gpsd.fix.latitude,gpsd.fix.longitude),2)
-      cummDist = str(cummDistNum)
-      print "Distance between samples: ", cummDist
+      current_distance = round(getDistance(old_lati,old_longi,gpsd.fix.latitude,gpsd.fix.longitude),2)
+      current_distance_string = str(current_distance)
+      print "Distance between samples: ", current_distance
+      if current_distance < 9000:
+        cummDist = cummDist + current_distance
+      print "Distance since script started: ", cummDist
 
       with canvas(device) as draw:
        font = ImageFont.load_default()
@@ -109,7 +116,7 @@ if __name__ == '__main__':
        draw.text((5, 40), "Spd: ", font=font, fill=255)       
        draw.text((35,40), sped, font=font, fill=255) 
        draw.text((5, 52), "Dst: ", font=font, fill=255)       
-       draw.text((35,52), cummDist, font=font, fill=255) 
+       draw.text((35,52), current_distance_string, font=font, fill=255) 
       
       old_lati = round(gpsd.fix.latitude,5)
       old_longi = round(gpsd.fix.longitude,5)
