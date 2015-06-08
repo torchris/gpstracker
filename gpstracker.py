@@ -1,6 +1,6 @@
 #! /usr/bin/python
 # GPA tracking system for RaspBerry Pi
-# By Chris Armour 
+# By Chris Armour 7 June 2015
 # Some sections created by Dan Mandle http://dan.mandle.me September 2012
 # License: GPL 2.0
  
@@ -10,6 +10,15 @@ from time import *
 import time
 import threading
 import math
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(18, GPIO.OUT)
+
+prev_input = 1
+LED_on = False
 
 from oled.device import ssd1306, sh1106
 from oled.render import canvas
@@ -18,7 +27,7 @@ from PIL import ImageFont
 font = ImageFont.load_default()
 device = sh1106(port=1, address=0x3C)
  
-gpsd = None #seting the global variable
+gpsd = None #setting the global variable
 cummDist = 0
 old_lati = 0
 old_longi = 0
@@ -73,23 +82,23 @@ if __name__ == '__main__':
 
       os.system('clear')
 
-      print
+#      print
       print ' GPS reading'
       print '----------------------------------------'
       print 'latitude    ' , round(gpsd.fix.latitude,5)
       print 'longitude   ' , round(gpsd.fix.longitude,5)
       print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
       print 'altitude (m)' , gpsd.fix.altitude
-      print 'eps         ' , gpsd.fix.eps
-      print 'epx         ' , gpsd.fix.epx
-      print 'epv         ' , gpsd.fix.epv
-      print 'ept         ' , gpsd.fix.ept
-      print 'speed (m/s) ' , gpsd.fix.speed
-      print 'climb       ' , gpsd.fix.climb
-      print 'track       ' , gpsd.fix.track
-      print 'mode        ' , gpsd.fix.mode
-      print
-      print 'sats        ' , gpsd.satellites
+#      print 'eps         ' , gpsd.fix.eps
+#      print 'epx         ' , gpsd.fix.epx
+#      print 'epv         ' , gpsd.fix.epv
+#      print 'ept         ' , gpsd.fix.ept
+#      print 'speed (m/s) ' , gpsd.fix.speed
+#      print 'climb       ' , gpsd.fix.climb
+#      print 'track       ' , gpsd.fix.track
+#      print 'mode        ' , gpsd.fix.mode
+#      print
+#      print 'sats        ' , gpsd.satellites
       
 
       lati = str(round(gpsd.fix.latitude,5))
@@ -101,9 +110,20 @@ if __name__ == '__main__':
       current_distance = round(getDistance(old_lati,old_longi,gpsd.fix.latitude,gpsd.fix.longitude),2)
       current_distance_string = str(current_distance)
       print "Distance between samples: ", current_distance
+      input = GPIO.input(24)
       if current_distance < 9000:
-        cummDist = cummDist + current_distance
-      print "Distance since script started: ", cummDist
+       if (not prev_input) and input:
+         if (LED_on == False):
+           print("Button pressed")
+           LED_on = True
+           GPIO.output(18,GPIO.HIGH)
+           cummDist = cummDist + current_distance
+         elif (LED_on == True):
+           print('Button pressed again')
+           LED_on = False
+           GPIO.output(18,GPIO.LOW)    
+      prev_input = input
+      print "Distance since button pressed: ", cummDist
 
       with canvas(device) as draw:
        font = ImageFont.load_default()
@@ -120,11 +140,13 @@ if __name__ == '__main__':
       
       old_lati = round(gpsd.fix.latitude,5)
       old_longi = round(gpsd.fix.longitude,5)
-      time.sleep(5) #set to whatever
+      time.sleep(0.25) #set to whatever
  
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
     print "\nKilling Thread..."
     gpsp.running = False
     gpsp.join() # wait for the thread to finish what it's doing
   print "Done.\nExiting."
+
+  GPIO.cleanup() 
 
