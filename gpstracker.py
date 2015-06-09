@@ -32,6 +32,7 @@ cummDist = 0
 old_lati = 0
 old_longi = 0
 current_distance = 0
+button_press = 0
  
 os.system('clear') #clear the terminal (optional)
  
@@ -77,6 +78,7 @@ if __name__ == '__main__':
       global old_lati
       global old_longi
       global current_distance
+      global button_press
       #It may take a second or two to get good data
       #print gpsd.fix.latitude,', ',gpsd.fix.longitude,'  Time: ',gpsd.utc
 
@@ -118,12 +120,15 @@ if __name__ == '__main__':
            LED_on = True
            GPIO.output(18,GPIO.HIGH)
            cummDist = cummDist + current_distance
+           button_press = button_press + 1
          elif (LED_on == True):
            print('Button pressed again')
            LED_on = False
-           GPIO.output(18,GPIO.LOW)    
+           GPIO.output(18,GPIO.LOW) 
+	   button_press = button_press + 1   
       prev_input = input
       print "Distance since button pressed: ", cummDist
+      print 'Button has been pressed: ', button_press
 
       with canvas(device) as draw:
        font = ImageFont.load_default()
