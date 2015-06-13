@@ -110,25 +110,39 @@ if __name__ == '__main__':
       print "Old Latitude:  ", old_lati
       print "Old Longitude:  ", old_longi
       current_distance = round(getDistance(old_lati,old_longi,gpsd.fix.latitude,gpsd.fix.longitude),2)
-      current_distance_string = str(current_distance)
+
       print "Distance between samples: ", current_distance
       input = GPIO.input(24)
       if current_distance < 9000:
        if (not prev_input) and input:
          if (LED_on == False):
            print("Button pressed")
-           LED_on = True
-           GPIO.output(18,GPIO.HIGH)
-           cummDist = cummDist + current_distance
            button_press = button_press + 1
          elif (LED_on == True):
            print('Button pressed again')
-           LED_on = False
-           GPIO.output(18,GPIO.LOW) 
 	   button_press = button_press + 1   
       prev_input = input
-      print "Distance since button pressed: ", cummDist
-      print 'Button has been pressed: ', button_press
+      if (button_press == 0):
+        print('Waiting')
+      elif (button_press == 1):
+        print'Button pressed = ', button_press
+        LED_on = True
+        GPIO.output(18,GPIO.HIGH)
+        cummDist = cummDist + current_distance
+        print "Distance since button pressed: ", cummDist
+      elif (button_press == 2):
+        print'Button pressed = ', button_press
+        LED_on = False
+        GPIO.output(18,GPIO.LOW)
+        print 'Total distance travelled: ', cummDist
+      elif (button_press == 3):
+        print'Button pressed = ', button_press
+        print 'Resetting'
+        cummDist = 0
+        LED_on = False
+        GPIO.output(18,GPIO.LOW)
+        button_press = 0
+      cummDist_string = str(cummDist)    
 
       with canvas(device) as draw:
        font = ImageFont.load_default()
@@ -141,7 +155,7 @@ if __name__ == '__main__':
        draw.text((5, 40), "Spd: ", font=font, fill=255)       
        draw.text((35,40), sped, font=font, fill=255) 
        draw.text((5, 52), "Dst: ", font=font, fill=255)       
-       draw.text((35,52), current_distance_string, font=font, fill=255) 
+       draw.text((35,52), cummDist_string, font=font, fill=255) 
       
       old_lati = round(gpsd.fix.latitude,5)
       old_longi = round(gpsd.fix.longitude,5)
